@@ -61,9 +61,9 @@
         <h1>NEXROBOTICS Console</h1>
 
         <div id="auth-panel" class="auth-box">
-            <p>보안 강화를 위해 본사의 승인 전용 암호를 입력해 주십시오.</p>
+            <p>보안 관리를 위해 지정된 마스터 비밀번호를 입력해 주십시오.</p>
             <div class="form-group">
-                <input type="password" id="admin-pass-input" class="form-control" placeholder="관리자 보안 비밀번호 입력" style="text-align: center;">
+                <input type="password" id="admin-pass-input" class="form-control" placeholder="4자리 비밀번호 입력" style="text-align: center; letter-spacing: 4px;" maxlength="10" onkeydown="if(event.keyCode==13) verifyAdminGate()">
             </div>
             <button class="btn btn-green" onclick="verifyAdminGate()">인증 및 대시보드 접속</button>
         </div>
@@ -91,7 +91,7 @@
 
     <script>
         // -------------------------------------------------------------
-        // [필수 설정 1] 메인 페이지와 반드시 '동일한' Firebase 설정을 기입하세요.
+        // [필수 설정] 메인 페이지(index.html)와 반드시 '동일한' Firebase 설정을 기입하세요.
         // -------------------------------------------------------------
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
@@ -105,18 +105,28 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // [필수 설정 2] 관리자 페이지 전용 접근 비밀번호를 자유롭게 수정하세요.
-        const ACCESS_SECRET_KEY = "nexrobotics123!"; 
+        // 관리자 페이지 마스터 접근 비밀번호 설정
+        const ACCESS_SECRET_KEY = "0429"; 
+        let loginAttempts = 0; // 연속 실패 횟수 계산용 변수
 
         // 1. 게이트 패스 인증 함수
         function verifyAdminGate() {
             const inputVal = document.getElementById("admin-pass-input").value;
+            
             if (inputVal === ACCESS_SECRET_KEY) {
                 document.getElementById("auth-panel").style.display = "none";
                 document.getElementById("workspace-panel").style.display = "block";
                 startLoadingDashboard();
             } else {
-                alert("인증에 실패하였습니다. 비밀번호를 다시 확인하세요.");
+                loginAttempts++;
+                document.getElementById("admin-pass-input").value = ""; // 입력창 비우기
+                
+                if (loginAttempts >= 3) {
+                    alert("비밀번호를 3회 연속 오입력하여 메인 페이지로 강제 이동합니다.");
+                    window.location.href = "index.html"; // 메인으로 강제 이동
+                } else {
+                    alert(`비밀번호가 일치하지 않습니다.\n(누적 실패: ${loginAttempts}/3회)`);
+                }
             }
         }
 
@@ -139,7 +149,6 @@
             })
             .then(() => {
                 alert("Cloud Firestore 데이터베이스에 성공적으로 저장 및 배포되었습니다.");
-                // 입력칸 초기화
                 document.getElementById("new-title").value = "";
                 document.getElementById("new-content").value = "";
             })
