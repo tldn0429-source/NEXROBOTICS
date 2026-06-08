@@ -33,21 +33,21 @@
         .auth-box { text-align: center; padding: 2rem 0; }
         .auth-box p { color: var(--text-muted); margin-bottom: 1.5rem; }
         
-        /* 폼 요소 그룹 디자인 */
+        /* 폼 요소 디자인 */
         .form-group { margin-bottom: 1.5rem; }
         .form-group label { display: block; color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.95rem; font-weight: 500; }
         .form-control { width: 100%; padding: 0.85rem 1.2rem; background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 10px; color: #fff; font-size: 1rem; transition: border-color 0.2s; }
         .form-control:focus { border-color: var(--accent-blue); outline: none; }
         textarea.form-control { height: 160px; resize: none; }
         
-        /* 버튼 공통 스타일 */
+        /* 버튼 스타일 */
         .btn { display: inline-block; width: 100%; padding: 0.9rem; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; color: white; }
         .btn:hover { opacity: 0.9; }
         .btn-blue { background: var(--accent-blue); }
         .btn-green { background: var(--accent-green); color: #000; }
         .btn-danger { background: var(--accent-red); padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 6px; width: auto; }
         
-        /* 게시물 테이블형 대시보드 리스트 */
+        /* 관리 목록 디자인 */
         .manage-header { margin: 3rem 0 1rem; padding-top: 2rem; border-top: 1px solid var(--border-color); color: var(--text-main); font-size: 1.4rem; }
         .post-list-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-dark); padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 0.75rem; }
         .post-info { display: flex; flex-direction: column; gap: 0.25rem; max-width: 80%; }
@@ -90,9 +90,10 @@
     </div>
 
     <script>
-        // -------------------------------------------------------------
-        // [필수 설정] 메인 페이지(index.html)와 반드시 '동일한' Firebase 설정을 기입하세요.
-        // -------------------------------------------------------------
+        // =============================================================
+        // [중요!] 본인의 실제 Firebase 콘솔에서 복사한 키값들을 아래에 꼭 넣어주세요.
+        // index.html(메인페이지)에 쓰인 내용과 완벽히 일치해야 데이터가 연동됩니다.
+        // =============================================================
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_AUTH_DOMAIN",
@@ -102,70 +103,75 @@
             appId: "YOUR_APP_ID"
         };
 
+        // Firebase 초기화 실행
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 관리자 페이지 마스터 접근 비밀번호 설정
+        // 관리자 접근 비밀번호 설정
         const ACCESS_SECRET_KEY = "0429"; 
-        let loginAttempts = 0; // 연속 실패 횟수 계산용 변수
+        let loginAttempts = 0;
 
-        // 1. 게이트 패스 인증 함수
+        // 1. 비밀번호 인증 함수
         function verifyAdminGate() {
             const inputVal = document.getElementById("admin-pass-input").value;
             
             if (inputVal === ACCESS_SECRET_KEY) {
                 document.getElementById("auth-panel").style.display = "none";
                 document.getElementById("workspace-panel").style.display = "block";
-                startLoadingDashboard();
+                startLoadingDashboard(); // 비밀번호가 맞으면 글 목록 로드 및 글쓰기 활성화
             } else {
                 loginAttempts++;
-                document.getElementById("admin-pass-input").value = ""; // 입력창 비우기
+                document.getElementById("admin-pass-input").value = "";
                 
                 if (loginAttempts >= 3) {
                     alert("비밀번호를 3회 연속 오입력하여 메인 페이지로 강제 이동합니다.");
-                    window.location.href = "index.html"; // 메인으로 강제 이동
+                    window.location.href = "index.html";
                 } else {
                     alert(`비밀번호가 일치하지 않습니다.\n(누적 실패: ${loginAttempts}/3회)`);
                 }
             }
         }
 
-        // 2. 파이어베이스 새 포스트 추가 함수
+        // 2. [수정 및 보완] 파이어베이스 데이터베이스에 글 저장하는 함수
         function submitNewPost() {
-            const title = document.getElementById("new-title").value.trim();
-            const content = document.getElementById("new-content").value.trim();
+            const titleInput = document.getElementById("new-title");
+            const contentInput = document.getElementById("new-content");
+            
+            const title = titleInput.value.trim();
+            const content = contentInput.value.trim();
 
             if (!title || !content) {
                 alert("제목과 본문 요소를 빠짐없이 기입해 주세요.");
                 return;
             }
 
+            // 'posts' 컬렉션에 메인 페이지가 요구하는 데이터 구조 규격으로 완벽 매핑하여 저장
             db.collection("posts").add({
                 title: title,
                 content: content,
                 likes: 0,
                 dislikes: 0,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: firebase.firestore.FieldValue.serverTimestamp() // 서버 표준 시간 저장
             })
             .then(() => {
-                alert("Cloud Firestore 데이터베이스에 성공적으로 저장 및 배포되었습니다.");
-                document.getElementById("new-title").value = "";
-                document.getElementById("new-content").value = "";
+                alert("성공적으로 저장 및 배포되었습니다! 메인 페이지를 확인해보세요.");
+                titleInput.value = "";   // 입력창 초기화
+                contentInput.value = ""; // 입력창 초기화
             })
             .catch((error) => {
-                console.error("데이터 저장 실패: ", error);
-                alert("업로드 실패: 권한이 없거나 네트워크 통신 오류입니다.");
+                console.error("데이터 저장 실패 에러 로그: ", error);
+                alert("업로드 실패!\n원인 1: Firebase Config 미설정\n원인 2: Firebase Firestore Rules(보안규칙) 차단");
             });
         }
 
-        // 3. 관리자용 삭제 연동 백그라운드 리스너
+        // 3. 실시간 등록된 게시글 목록 로드 및 뷰어 함수
         function startLoadingDashboard() {
             db.collection("posts").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
                 const listContainer = document.getElementById("admin-list-container");
                 listContainer.innerHTML = "";
 
                 if (snapshot.empty) {
-                    listContainer.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:1rem;">데이터베이스에 기록된 내용이 전무합니다.</p>';
+                    listContainer.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:1rem;">등록된 게시글이 없습니다.</p>';
                     return;
                 }
 
@@ -190,10 +196,12 @@
                     `;
                     listContainer.innerHTML += itemHtml;
                 });
+            }, (error) => {
+                console.error("데이터 로드 실패: ", error);
             });
         }
 
-        // 4. 데이터베이스 영구 삭제 함수
+        // 4. 데이터베이스 글 삭제 함수
         function executeDeletePost(postId) {
             if (confirm("해당 포스트를 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.")) {
                 db.collection("posts").doc(postId).delete()
@@ -201,7 +209,7 @@
                     alert("성공적으로 파기되었습니다.");
                 })
                 .catch((error) => {
-                    alert("삭제 과정 중 문제가 발생했습니다.");
+                    alert("삭제 권한이 없거나 문제가 발생했습니다.");
                 });
             }
         }
