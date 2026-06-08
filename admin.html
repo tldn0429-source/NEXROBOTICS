@@ -3,97 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexRobotics - 관리자 컨트롤 보드</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>NexRobotics - 관리자 컨트롤 센터</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <style>
-        :root {
-            --bg-dark: #0b0f19;
-            --panel-dark: #141b2d;
-            --border-color: #1e293b;
-            --accent-green: #00df89;
-            --accent-blue: #0070f3;
-            --accent-red: #ef4444;
-            --text-main: #ffffff;
-            --text-muted: #94a3b8;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg-dark); color: var(--text-main); font-family: 'Outfit', 'Noto Sans KR', sans-serif; padding: 2rem 1rem; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        :root { --bg-dark: #0b0f19; --card-dark: #141b2d; --border: #1e293b; --text-light: #f8fafc; --text-muted: #94a3b8; --danger: #ef4444; }
+        body { background-color: var(--bg-dark); color: var(--text-light); font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 40px 20px; }
+        .admin-container { max-width: 1000px; margin: 0 auto; }
+        header { border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center; }
+        h1 { font-family: 'Outfit', sans-serif; margin: 0; font-size: 2rem; }
+        h1 span { color: #ef4444; font-size: 0.9rem; letter-spacing: 2px; margin-left: 10px; border: 1px solid #ef4444; padding: 2px 6px; border-radius: 4px; }
+        .section-title { font-size: 1.25rem; margin-bottom: 20px; color: var(--text-light); display: flex; align-items: center; gap: 8px; }
         
-        .admin-container { width: 100%; max-width: 700px; background: var(--panel-dark); border: 1px solid var(--border-color); border-radius: 20px; padding: 2.5rem; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-        h1 { font-size: 1.85rem; margin-bottom: 2rem; border-bottom: 2px solid var(--border-color); padding-bottom: 1rem; color: var(--accent-green); text-align: center; }
-        
-        /* 암호화 게이트웨이 화면 */
-        .auth-box { text-align: center; padding: 2rem 0; }
-        .auth-box p { color: var(--text-muted); margin-bottom: 1.5rem; }
-        
-        /* 폼 요소 디자인 */
-        .form-group { margin-bottom: 1.5rem; }
-        .form-group label { display: block; color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.95rem; font-weight: 500; }
-        .form-control { width: 100%; padding: 0.85rem 1.2rem; background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 10px; color: #fff; font-size: 1rem; transition: border-color 0.2s; }
-        .form-control:focus { border-color: var(--accent-blue); outline: none; }
-        textarea.form-control { height: 160px; resize: none; }
-        
-        /* 버튼 스타일 */
-        .btn { display: inline-block; width: 100%; padding: 0.9rem; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; color: white; }
-        .btn:hover { opacity: 0.9; }
-        .btn-blue { background: var(--accent-blue); }
-        .btn-green { background: var(--accent-green); color: #000; }
-        .btn-danger { background: var(--accent-red); padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 6px; width: auto; }
-        
-        /* 관리 목록 디자인 */
-        .manage-header { margin: 3rem 0 1rem; padding-top: 2rem; border-top: 1px solid var(--border-color); color: var(--text-main); font-size: 1.4rem; }
-        .post-list-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-dark); padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 0.75rem; }
-        .post-info { display: flex; flex-direction: column; gap: 0.25rem; max-width: 80%; }
-        .post-title-text { font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .post-meta-text { font-size: 0.85rem; color: var(--text-muted); }
+        /* 테이블 스타일 */
+        .post-table { width: 100%; border-collapse: collapse; background: var(--card-dark); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .post-table th, .post-table td { padding: 16px 20px; text-align: left; border-bottom: 1px solid var(--border); }
+        .post-table th { background: #1e293b; color: var(--text-light); font-weight: 700; font-size: 0.95rem; }
+        .post-table td { color: var(--text-muted); font-size: 0.95rem; }
+        .post-title-td { color: var(--text-light); font-weight: 500; }
+        .delete-btn { background: var(--danger); border: none; color: white; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: background 0.2s; }
+        .delete-btn:hover { background: #dc2626; }
+        .empty-tr { text-align: center; padding: 40px !important; color: var(--text-muted); }
+        .back-link { color: var(--text-muted); text-decoration: none; font-size: 0.95rem; }
+        .back-link:hover { color: #fff; text-decoration: underline; }
     </style>
 </head>
 <body>
 
     <div class="admin-container">
-        <h1>NEXROBOTICS Console</h1>
+        <header>
+            <h1>NexRobotics <span>ADMIN CONTROL</span></h1>
+            <a href="index.html" class="back-link">&larr; 메인 홈으로 가기</a>
+        </header>
 
-        <div id="auth-panel" class="auth-box">
-            <p>보안 관리를 위해 지정된 마스터 비밀번호를 입력해 주십시오.</p>
-            <div class="form-group">
-                <input type="password" id="admin-pass-input" class="form-control" placeholder="4자리 비밀번호 입력" style="text-align: center; letter-spacing: 4px;" maxlength="10" onkeydown="if(event.keyCode==13) verifyAdminGate()">
-            </div>
-            <button class="btn btn-green" onclick="verifyAdminGate()">인증 및 대시보드 접속</button>
-        </div>
-
-        <div id="workspace-panel" style="display: none;">
-            <h2 style="font-size: 1.3rem; margin-bottom: 1.25rem; color: var(--accent-blue);">📝 새 신규 포스트 등록</h2>
+        <main>
+            <div class="section-title">🗑️ 전체 게시글 모니터링 및 삭제 관리</div>
             
-            <div class="form-group">
-                <label for="new-title">게시물 제목</label>
-                <input type="text" id="new-title" class="form-control" placeholder="공지 핵심 타이틀 기입">
-            </div>
-            
-            <div class="form-group">
-                <label for="new-content">본문 세부 내용</label>
-                <textarea id="new-content" class="form-control" placeholder="줄바꿈 처리 등이 메인 페이지에 그대로 표현됩니다."></textarea>
-            </div>
-            
-            <button class="btn btn-blue" onclick="submitNewPost()">클라우드 데이터베이스에 발행</button>
-
-            <h2 class="manage-header">📋 게시글 이력 관리 및 삭제</h2>
-            <div id="admin-list-container">
-                </div>
-        </div>
+            <table class="post-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">작성일자</th>
+                        <th style="width: 50%;">게시글 제목</th>
+                        <th style="width: 15%;">반응 (👍/👎)</th>
+                        <th style="width: 10%; text-align: center;">관리</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-table-body">
+                    <tr>
+                        <td colspan="4" class="empty-tr">데이터를 동기화 중입니다...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </main>
     </div>
 
     <script>
-        // =============================================================
-        // [중요!] 본인의 실제 Firebase 콘솔에서 복사한 키값들을 아래에 꼭 넣어주세요.
-        // index.html(메인페이지)에 쓰인 내용과 완벽히 일치해야 데이터가 연동됩니다.
-        // =============================================================
+        // Firebase Config 정보 입력 (index.html과 동일한 계정 설정 필수)
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_AUTH_DOMAIN",
@@ -103,116 +71,65 @@
             appId: "YOUR_APP_ID"
         };
 
-        // Firebase 초기화 실행
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 관리자 접근 비밀번호 설정
-        const ACCESS_SECRET_KEY = "0429"; 
-        let loginAttempts = 0;
-
-        // 1. 비밀번호 인증 함수
-        function verifyAdminGate() {
-            const inputVal = document.getElementById("admin-pass-input").value;
-            
-            if (inputVal === ACCESS_SECRET_KEY) {
-                document.getElementById("auth-panel").style.display = "none";
-                document.getElementById("workspace-panel").style.display = "block";
-                startLoadingDashboard(); // 비밀번호가 맞으면 글 목록 로드 및 글쓰기 활성화
-            } else {
-                loginAttempts++;
-                document.getElementById("admin-pass-input").value = "";
-                
-                if (loginAttempts >= 3) {
-                    alert("비밀번호를 3회 연속 오입력하여 메인 페이지로 강제 이동합니다.");
-                    window.location.href = "index.html";
-                } else {
-                    alert(`비밀번호가 일치하지 않습니다.\n(누적 실패: ${loginAttempts}/3회)`);
-                }
-            }
-        }
-
-        // 2. [수정 및 보완] 파이어베이스 데이터베이스에 글 저장하는 함수
-        function submitNewPost() {
-            const titleInput = document.getElementById("new-title");
-            const contentInput = document.getElementById("new-content");
-            
-            const title = titleInput.value.trim();
-            const content = contentInput.value.trim();
-
-            if (!title || !content) {
-                alert("제목과 본문 요소를 빠짐없이 기입해 주세요.");
-                return;
-            }
-
-            // 'posts' 컬렉션에 메인 페이지가 요구하는 데이터 구조 규격으로 완벽 매핑하여 저장
-            db.collection("posts").add({
-                title: title,
-                content: content,
-                likes: 0,
-                dislikes: 0,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp() // 서버 표준 시간 저장
-            })
-            .then(() => {
-                alert("성공적으로 저장 및 배포되었습니다! 메인 페이지를 확인해보세요.");
-                titleInput.value = "";   // 입력창 초기화
-                contentInput.value = ""; // 입력창 초기화
-            })
-            .catch((error) => {
-                console.error("데이터 저장 실패 에러 로그: ", error);
-                alert("업로드 실패!\n원인 1: Firebase Config 미설정\n원인 2: Firebase Firestore Rules(보안규칙) 차단");
-            });
-        }
-
-        // 3. 실시간 등록된 게시글 목록 로드 및 뷰어 함수
-        function startLoadingDashboard() {
+        // 실시간으로 전체 글을 테이블 형식으로 렌더링
+        function listenAndManagePosts() {
             db.collection("posts").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
-                const listContainer = document.getElementById("admin-list-container");
-                listContainer.innerHTML = "";
-
+                const tbody = document.getElementById("admin-table-body");
+                
                 if (snapshot.empty) {
-                    listContainer.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:1rem;">등록된 게시글이 없습니다.</p>';
+                    tbody.innerHTML = '<tr><td colspan="4" class="empty-tr">현재 등록된 게시글이 없습니다.</td></tr>';
                     return;
                 }
+
+                tbody.innerHTML = "";
 
                 snapshot.forEach((doc) => {
                     const post = doc.data();
                     const postId = doc.id;
-                    
-                    let dateStr = "날짜 대기중";
-                    if(post.createdAt) {
-                        const d = post.createdAt.toDate();
-                        dateStr = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+
+                    let dateString = "-";
+                    if (post.createdAt) {
+                        const date = post.createdAt.toDate();
+                        dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
                     }
 
-                    const itemHtml = `
-                        <div class="post-list-item">
-                            <div class="post-info">
-                                <span class="post-title-text">${post.title}</span>
-                                <span class="post-meta-text">날짜: ${dateStr} | 👍 ${post.likes || 0}  👎 ${post.dislikes || 0}</span>
-                            </div>
-                            <button class="btn btn-danger" onclick="executeDeletePost('${postId}')">삭제</button>
-                        </div>
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${dateString}</td>
+                        <td class="post-title-td">${escapeHtml(post.title)}</td>
+                        <td>👍 ${post.likes || 0} / 👎 ${post.dislikes || 0}</td>
+                        <td style="text-align: center;">
+                            <button class="delete-btn" onclick="deletePost('${postId}')">삭제</button>
+                        </td>
                     `;
-                    listContainer.innerHTML += itemHtml;
+                    tbody.appendChild(tr);
                 });
-            }, (error) => {
-                console.error("데이터 로드 실패: ", error);
             });
         }
 
-        // 4. 데이터베이스 글 삭제 함수
-        function executeDeletePost(postId) {
-            if (confirm("해당 포스트를 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.")) {
+        // 특정 게시글을 삭제하는 기능 함수
+        function deletePost(postId) {
+            if (confirm("정말로 이 게시글을 영구 삭제하시겠습니까?\n하위 댓글 데이터도 함께 격리됩니다.")) {
                 db.collection("posts").doc(postId).delete()
                 .then(() => {
-                    alert("성공적으로 파기되었습니다.");
+                    alert("게시글이 성공적으로 삭제되었습니다.");
                 })
                 .catch((error) => {
-                    alert("삭제 권한이 없거나 문제가 발생했습니다.");
+                    console.error("삭제 실패:", error);
+                    alert("삭제 작업 중 오류가 발생했습니다.");
                 });
             }
         }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        window.addEventListener('DOMContentLoaded', listenAndManagePosts);
     </script>
 </body>
 </html>
