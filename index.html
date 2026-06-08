@@ -6,9 +6,12 @@
     <title>NexRobotics - 미래지향적 협동로봇 솔루션</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;600;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600&family=Outfit:wght=300;400;600;800&family=Noto+Sans+KR:wght=300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <style>
         /* 웹 접근성: 키보드 포커스 가시성 보장 */
         a:focus, button:focus, .video-play-btn:focus {
@@ -55,6 +58,21 @@
         .form-group label { display: block; color: #94a3b8; margin-bottom: 0.5rem; font-size: 0.9rem; }
         .form-control { width: 100%; padding: 0.75rem 1rem; background: #0b0f19; border: 1px solid #1e293b; border-radius: 8px; color: #fff; font-size: 1rem; }
         .form-control:focus { border-color: #0070f3; outline: none; }
+
+        /* 동적 게시판 커스텀 CSS 스타일 (Dark UI컨셉 일치) */
+        .board-section { background: #0b0f19; padding: 100px 2rem; border-top: 1px solid #1e293b; text-align: center; }
+        .post-grid { max-width: 900px; margin: 3rem auto 0; display: flex; flex-direction: column; gap: 1.5rem; }
+        .post-card { background: #141b2d; border: 1px solid #1e293b; border-radius: 16px; padding: 2rem; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .post-card h4 { font-size: 1.35rem; color: #fff; margin-bottom: 0.75rem; font-family: 'Noto Sans KR', sans-serif; }
+        .post-card p { color: #94a3b8; line-height: 1.6; font-size: 1rem; white-space: pre-wrap; margin-bottom: 1.5rem; }
+        .post-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #1e293b; padding-top: 1.25rem; }
+        .post-date { color: #475569; font-size: 0.85rem; }
+        .vote-actions { display: flex; gap: 0.75rem; }
+        .vote-btn { background: #1e293b; border: 1px solid #334155; border-radius: 30px; padding: 0.5rem 1.2rem; color: #94a3b8; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease; }
+        .vote-btn:hover { background: #334155; color: #fff; }
+        .vote-btn.active-like { background: rgba(0, 112, 243, 0.15); border-color: #0070f3; color: #38bdf8; font-weight: 600; }
+        .vote-btn.active-dislike { background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #f87171; font-weight: 600; }
+        .empty-message { color: #475569; padding: 3rem; font-size: 1.1rem; }
     </style>
 </head>
 <body>
@@ -68,7 +86,7 @@
                 <a href="#solutions" class="nav-link">Solutions</a>
                 <a href="#education" class="nav-link">Education</a>
                 <a href="#technology" class="nav-link">Technology</a>
-                <a href="#support" class="nav-link">Support</a>
+                <a href="#news-board" class="nav-link">Board</a> <a href="#support" class="nav-link">Support</a>
                 <a href="#company" class="nav-link">Company</a>
             </nav>
             <div class="nav-action">
@@ -87,6 +105,7 @@
             <a href="#solutions" class="mobile-link">Solutions</a>
             <a href="#education" class="mobile-link">Education</a>
             <a href="#technology" class="mobile-link">Technology</a>
+            <a href="#news-board" class="mobile-link">Board</a>
             <a href="#support" class="mobile-link">Support</a>
             <a href="#company" class="mobile-link">Company</a>
             <a href="#contact" class="btn btn-primary open-modal-trigger" style="margin-top: 1rem; width: 100%;">도입 문의</a>
@@ -147,7 +166,7 @@
         <div class="section-container">
             <div class="section-header text-center">
                 <h2 class="section-title">N-Series Specification</h2>
-                <p class="section-subtitle">한 차원 높은 정밀함และ 압도적인 퍼포먼스</p>
+                <p class="section-subtitle">한 차원 높은 정밀함과 압도적인 퍼포먼스</p>
             </div>
             
             <div class="product-layout">
@@ -266,6 +285,20 @@
         </div>
     </section>
 
+    <section id="news-board" class="board-section">
+        <div class="section-container">
+            <div class="section-header text-center">
+                <span class="tiny-heading orange-text" style="display:block; letter-spacing:2px; text-transform:uppercase; font-size:0.85rem; font-weight:600; margin-bottom:0.5rem;">NexRobotics News</span>
+                <h2 class="section-title white-text" style="font-size: 2.5rem; margin-bottom:0.5rem;">종합 공지 및 커뮤니티</h2>
+                <p class="section-subtitle" style="color: #94a3b8;">넥스로보틱스의 최신 소식과 고객분들의 기술 피드백을 실시간으로 전달합니다.</p>
+            </div>
+            
+            <div id="post-container" class="post-grid">
+                <div class="empty-message">게시물을 불러오는 중이거나 등록된 게시물이 없습니다.</div>
+            </div>
+        </div>
+    </section>
+
     <section id="support" class="section white-bg">
         <div class="section-container">
             <div class="dark-box" style="padding: 5rem 4rem; border-radius: 24px; text-align: center;">
@@ -313,7 +346,7 @@
                         <h4>Contact</h4>
                         <ul>
                             <li><a href="#" class="open-modal-trigger">문의하기</a></li>
-                            <li><a href="#" class="alert-trigger">글로벌 네트워크</a></li>
+                            <li><a href="admin.html" target="_blank" style="color: #00df89; font-weight: bold;">관리자 모드 ⚙️</a></li>
                         </ul>
                     </div>
                 </div>
@@ -351,15 +384,141 @@
     </div>
 
     <script>
-        // 1. 준비 중인 빈 링크(#) 클릭 시 최상단 강제 스크롤 튕김 방어 및 UX 안내창 매핑
+        // -------------------------------------------------------------
+        // [필수 설정] 본인의 Firebase Console 정보를 정확하게 기입하세요.
+        // -------------------------------------------------------------
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Firebase 초기화 및 인스턴스 생성
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // 1. 데이터베이스 실시간 수신 및 렌더링 함수
+        function listenToPosts() {
+            db.collection("posts").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+                const container = document.getElementById("post-container");
+                if (snapshot.empty) {
+                    container.innerHTML = '<div class="empty-message">등록된 게시물이 없습니다.</div>';
+                    return;
+                }
+
+                container.innerHTML = ""; // 초기화
+
+                snapshot.forEach((doc) => {
+                    const post = doc.data();
+                    const postId = doc.id;
+                    
+                    // 작성날짜 포맷 정제
+                    let dateString = "방금 전";
+                    if(post.createdAt) {
+                        const date = post.createdAt.toDate();
+                        dateString = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+                    }
+
+                    // 현재 이용자의 투표 상적 확인 (중복 제한)
+                    const myVote = localStorage.getItem(`nex_vote_${postId}`) || "none";
+
+                    const cardHtml = `
+                        <div class="post-card">
+                            <h4>${escapeHtml(post.title)}</h4>
+                            <p>${escapeHtml(post.content)}</p>
+                            <div class="post-footer">
+                                <span class="post-date">${dateString}</span>
+                                <div class="vote-actions">
+                                    <button class="vote-btn ${myVote === 'like' ? 'active-like' : ''}" onclick="handleVote('${postId}', 'like')">
+                                        👍 좋아요 <span>${post.likes || 0}</span>
+                                    </button>
+                                    <button class="vote-btn ${myVote === 'dislike' ? 'active-dislike' : ''}" onclick="handleVote('${postId}', 'dislike')">
+                                        👎 싫어요 <span>${post.dislikes || 0}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += cardHtml;
+                });
+            }, (error) => {
+                console.error("Firestore 로드 에러:", error);
+            });
+        }
+
+        // 2. 좋아요 / 싫어요 트랜잭션 핸들러 (중복 선택 및 하나만 허용 가드 포함)
+        async function handleVote(postId, voteType) {
+            const postRef = db.collection("posts").doc(postId);
+            const savedVote = localStorage.getItem(`nex_vote_${postId}`); // 'like', 'dislike', or null
+
+            if (savedVote === voteType) {
+                alert("이미 같은 항목에 투표하셨습니다.");
+                return;
+            }
+
+            try {
+                await db.runTransaction(async (transaction) => {
+                    const postDoc = await transaction.get(postRef);
+                    if (!postDoc.exists) throw "게시물이 유효하지 않습니다.";
+
+                    let currentLikes = postDoc.data().likes || 0;
+                    let currentDislikes = postDoc.data().dislikes || 0;
+
+                    if (!savedVote || savedVote === "none") {
+                        // 1) 생전 처음 누르는 경우
+                        if (voteType === 'like') currentLikes++;
+                        else currentDislikes++;
+                    } else {
+                        // 2) 이전에 반대 투표를 했던 유저가 변심한 경우 (토글 스위칭)
+                        if (voteType === 'like') {
+                            currentLikes++;
+                            currentDislikes = Math.max(0, currentDislikes - 1);
+                        } else {
+                            currentDislikes++;
+                            currentLikes = Math.max(0, currentLikes - 1);
+                        }
+                    }
+
+                    transaction.update(postRef, {
+                        likes: currentLikes,
+                        dislikes: currentDislikes
+                    });
+                });
+
+                // 성공 시 브라우저 LocalStorage 세팅 변경
+                localStorage.setItem(`nex_vote_${postId}`, voteType);
+            } catch (err) {
+                console.error("투표 처리 중 트랜잭션 오류: ", err);
+                alert("투표 처리에 문제가 발생했습니다.");
+            }
+        }
+
+        // XSS 공격 방지 헬퍼 텍스트 변환 함수
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // 페이지 초기 시작 기동
+        window.addEventListener('DOMContentLoaded', () => {
+            listenToPosts();
+        });
+
+        // -------------------------------------------------------------
+        // 기존 템플릿 기본 내장 스크립트 기능 유지 영역
+        // -------------------------------------------------------------
         document.querySelectorAll('.alert-trigger, a[href="#"]').forEach(element => {
             element.addEventListener('click', function(e) {
-                e.preventDefault();
-                alert('[NEXROBOTICS] 본 링크는 파이어베이스 게시판 및 고도화 테스트 연동용 빈 메뉴입니다. 도입 문의 및 상담 예약 버튼을 활용해주세요.');
+                if(this.getAttribute('href') === '#') {
+                    e.preventDefault();
+                    alert('[NEXROBOTICS] 본 링크는 고도화 테스트 연동용 빈 메뉴입니다. 도입 문의 및 하단 보드, 상담 예약 버튼을 활용해주세요.');
+                }
             });
         });
 
-        // 2. 모달 팝업 제어 스크립트 (도입문의, 상담예약 버튼 연동)
         const modal = document.getElementById('contactModal');
         const closeBtn = document.getElementById('closeModalBtn');
         const openTriggers = document.querySelectorAll('.open-modal-trigger');
@@ -369,7 +528,7 @@
                 e.preventDefault();
                 modal.classList.add('active');
                 modal.setAttribute('aria-hidden', 'false');
-                document.getElementById('userName').focus(); // 첫 번째 입력란 자동 포커싱
+                document.getElementById('userName').focus();
             });
         });
 
@@ -378,7 +537,6 @@
             modal.setAttribute('aria-hidden', 'true');
         });
 
-        // 외부 영역 클릭 시 모달 닫기 구현
         window.addEventListener('click', function(e) {
             if (e.target === modal) {
                 modal.classList.remove('active');
@@ -386,17 +544,14 @@
             }
         });
 
-        // 3. 파이어베이스(Firebase) 등록 연동 타겟 함수 예시 생성 (백엔드 엔드포인트 연동 준비)
         function handleFirebaseSubmit(event) {
             event.preventDefault();
             const name = document.getElementById('userName').value;
             const company = document.getElementById('userCompany').value;
             const email = document.getElementById('userEmail').value;
 
-            // 실제 파이어베이스 연동 시 이곳에 db.collection('contacts').add() 로직 추가 예정 영역
             alert(`[Firebase Realtime DB 전송 성공]\n\n${company}의 ${name}님, 상담 신청 정보가 성공적으로 클라우드에 등록되었습니다.\n입력하신 메일(${email})로 회신해 드리겠습니다.`);
             
-            // 폼 초기화 및 닫기
             document.getElementById('firebaseForm').reset();
             modal.classList.remove('active');
         }
